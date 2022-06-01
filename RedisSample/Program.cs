@@ -64,6 +64,24 @@ namespace RedisSample {
                             Console.WriteLine("Invalid argument. Type h for help. ");
                         }
                         continue;
+                    case "ttl":
+                        if (s.Length == 2) {
+                            program.GetKeyTTL(s[1]);                            
+                        } else {
+                            Console.WriteLine("Invalid argument. Type h for help. ");
+                        }
+                        continue;
+                    case "ex":
+                        if (s.Length == 3) {
+                            if (int.TryParse(s[2], out _)) {
+                                program.SetKeyExpiration(s[1], int.Parse(s[2]));
+                            } else {
+                                Console.WriteLine("Invalid argument. Invalid argument for expiration seconds. Type h for help. ");
+                            }
+                        } else {
+                            Console.WriteLine("Invalid argument. Type h for help. ");
+                        }
+                        continue;
                     case "sw":
                         if (s.Length == 3) {
                             program.SetWriteKeyValue(s[1], s[2]);
@@ -96,21 +114,14 @@ namespace RedisSample {
             //Console.WriteLine("  w Write cache         s Subscribe");
             //Console.WriteLine("  r Read cache          p Publish");
             //Console.WriteLine("  q Quit                h Help");
-            //Console.WriteLine();
-
-            Console.WriteLine("Writing/Reading key/value:");
-            Console.WriteLine("  w  '<key>' '<value>' <timeout sec>");
-            Console.WriteLine("  r  '<key>'");            
-
-            Console.WriteLine();
-            Console.WriteLine("Writing/Getting values into a sorted set by key:");
-            Console.WriteLine("  sw '<key>' '<value to add into the set>'");
-            Console.WriteLine("  sg '<key>'");
-
-            Console.WriteLine(); 
-            Console.WriteLine("Delete key:");
-            Console.WriteLine("  d '<key>'");
-
+            //Console.WriteLine();            
+            Console.WriteLine("  w  '<key>' '<value>' <timeout sec>       | Write key value with expiration");
+            Console.WriteLine("  r  '<key>'                               | Read key value ");
+            Console.WriteLine("  d  '<key>'                               | Delete key ");
+            Console.WriteLine("  ttl  '<key>'                             | Read key time to live (expiration)");                        
+            Console.WriteLine("  sw '<key>' '<value to add into the set>' | Add value to a set");
+            Console.WriteLine("  sg '<key>'                               | Pop set values");            
+            Console.WriteLine("  ex '<key>' <secondsFromNowToLive>        | Set expiration for a key");
             Console.WriteLine();
             Console.WriteLine("  q Quit                h Help");
 
@@ -189,7 +200,7 @@ namespace RedisSample {
         public void SetWriteKeyValue(string key, string value) {
             var cache = RedisConnectorHelper.Connection.GetDatabase();
             try {
-                cache.SortedSetAdd(key, new RedisValue(value), (DateTime.Now - mRefDate).TotalSeconds, CommandFlags.None);
+                cache.SortedSetAdd(key, new RedisValue(value), (DateTime.Now - mRefDate).TotalSeconds, CommandFlags.None);                
             } catch (StackExchange.Redis.RedisServerException ex) {
                 Console.WriteLine($"Error: key '{key}' is already used by other type. {ex.Message}");
 			} catch (Exception ex) {
@@ -208,6 +219,31 @@ namespace RedisSample {
                 }
             }
             return l;
+        }
+        public void SetKeyExpiration(string key, int expirationInSeconds) {
+            var cache = RedisConnectorHelper.Connection.GetDatabase();
+            try {
+                cache.KeyExpire(key, DateTime.Now.AddSeconds(expirationInSeconds));
+                TimeSpan? ts = cache.KeyTimeToLive(key);
+                if (ts != null) {
+                    Console.WriteLine($"Key '{key}' TTL is {ts.Value.TotalSeconds:N1} sec");
+                }
+            } catch (Exception ex) {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+        public void GetKeyTTL(string key) {
+            var cache = RedisConnectorHelper.Connection.GetDatabase();
+            try {                
+                TimeSpan? ts = cache.KeyTimeToLive(key);
+                if (ts != null) {
+                    Console.WriteLine($"Key '{key}' TTL is {ts.Value.TotalSeconds:N1} sec");
+                } else {
+                    Console.WriteLine($"Error: Unknown Key '{key}'");
+                }
+            } catch (Exception ex) {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
 
     }
