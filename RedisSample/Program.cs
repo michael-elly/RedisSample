@@ -101,6 +101,18 @@ namespace RedisSample {
                             Console.WriteLine("Invalid argument. Type h for help. ");
                         }
                         continue;
+                    case "sr":
+                        if (s.Length == 2) {
+                            List<string> rt = program.SetReadKeyValues(s[1]);
+                            if (rt.Count > 0) {
+                                Console.WriteLine($"Return value: \r\n{rt.Aggregate((i, j) => i + "\r\n" + j)}");
+                            } else {
+                                Console.WriteLine($"Returns an empty set of values.");
+                            }
+                        } else {
+                            Console.WriteLine("Invalid argument. Type h for help. ");
+                        }
+                        continue;
                     default:
                         Console.WriteLine("Invalid Selection...");
                         WriteHelp();
@@ -120,8 +132,9 @@ namespace RedisSample {
             Console.WriteLine("  d  '<key>'                               | Delete key ");
             Console.WriteLine("  ttl  '<key>'                             | Read key time to live (expiration)");                        
             Console.WriteLine("  sw '<key>' '<value to add into the set>' | Add value to a set");
-            Console.WriteLine("  sg '<key>'                               | Pop set values");            
-            Console.WriteLine("  ex '<key>' <secondsFromNowToLive>        | Set expiration for a key");
+            Console.WriteLine("  sg '<key>'                               | Pop set values");
+            Console.WriteLine("  sr '<key>'                               | Read set values");
+            Console.WriteLine("  ex '<key>' <secondsFromNowToLive>        | Set expiration for a key (storing any type)");
             Console.WriteLine();
             Console.WriteLine("  q Quit                h Help");
 
@@ -217,6 +230,15 @@ namespace RedisSample {
                 } else {
                     break;
                 }
+            }
+            return l;
+        }
+        public List<string> SetReadKeyValues(string key) {
+            var cache = RedisConnectorHelper.Connection.GetDatabase();
+            List<string> l = new List<string>();
+            var vals = cache.SortedSetRangeByScore(key);
+            foreach (RedisValue v in vals) {
+                l.Add(v.ToString());
             }
             return l;
         }
