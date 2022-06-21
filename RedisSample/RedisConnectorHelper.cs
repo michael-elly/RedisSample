@@ -10,7 +10,8 @@ namespace RedisSample {
         static RedisConnectorHelper() {
             RedisConnectorHelper.lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
             {
-                return ConnectionMultiplexer.Connect("localhost");
+                //return ConnectionMultiplexer.Connect("localhost");
+                return ConnectionMultiplexer.Connect("127.0.0.1:6379");
             });
         }
 
