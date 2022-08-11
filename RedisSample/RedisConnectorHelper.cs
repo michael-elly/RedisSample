@@ -7,19 +7,26 @@ using StackExchange.Redis;
 
 namespace RedisSample {
     public class RedisConnectorHelper {
-        static RedisConnectorHelper() {
-            RedisConnectorHelper.lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
-            {
-                //return ConnectionMultiplexer.Connect("localhost");
-                return ConnectionMultiplexer.Connect("127.0.0.1:6379");
-            });
-        }
+		//static RedisConnectorHelper() {
+		//	RedisConnectorHelper.lazyConnection = new Lazy<ConnectionMultiplexer>(() => {
+		//		//return ConnectionMultiplexer.Connect("localhost");
+		//		return ConnectionMultiplexer.Connect("127.0.0.1:6379");
+		//	});
+		//}
 
-        private static Lazy<ConnectionMultiplexer> lazyConnection;
+		public static bool Init(Lazy<ConnectionMultiplexer> a) {
+			if (mIsinitiated) return false;
+			RedisConnectorHelper.lazyConnection = a;
+			mIsinitiated = true;
+			return true;
+		}
 
-        public static ConnectionMultiplexer Connection {
+		private static Lazy<ConnectionMultiplexer> lazyConnection;
+		private static bool mIsinitiated = false;
+
+		public static ConnectionMultiplexer Connection {
             get {
-                return lazyConnection.Value;
+				return lazyConnection.Value;                
             }
         }
     }

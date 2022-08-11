@@ -14,7 +14,14 @@ namespace RedisSample {
         private static Regex re = new Regex(@"['].+?[']|[^ ]+");
 
         static void Main(string[] args) {
-            var program = new Program();
+			RedisConnectorHelper.Init(new Lazy<ConnectionMultiplexer>(() => {
+				ConnectionMultiplexer.SetFeatureFlag("preventthreadtheft", true);
+				//return ConnectionMultiplexer.Connect("localhost");
+				return ConnectionMultiplexer.Connect("127.0.0.1:6379");
+			}));
+			System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+
+			var program = new Program();
             WriteHelp();
             while (true) {
                 Thread.Sleep(500);
@@ -41,16 +48,22 @@ namespace RedisSample {
                         continue;
                     case "w":
                         if (s.Length == 3) {
+                            sw.Restart();
                             program.WriteKeyValue(s[1], s[2]);
+                            sw.Stop(); Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds:N0} ms");
                         } else if (s.Length == 4 && int.TryParse(s[3], out _)) {
+                            sw.Restart();
                             program.WriteKeyValue(s[1], s[2], int.Parse(s[3]));
+                            sw.Stop(); Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds:N0} ms");
                         } else {
                             Console.WriteLine("Invalid argument. Type h for help. ");
                         }                        
                         continue;
                     case "r":
                         if (s.Length == 2) {
+                            sw.Restart();
                             string rt = program.ReadKeyValue(s[1]);
+                            sw.Stop(); Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds:N0} ms");
                             Console.WriteLine($"Return value: \"{rt ?? "NULL"}\"");
                         } else {
                             Console.WriteLine("Invalid argument. Type h for help. ");
@@ -58,7 +71,9 @@ namespace RedisSample {
                         continue;
                     case "d":
                         if (s.Length == 2) {
+                            sw.Restart();
                             bool rt = program.DeleteKey(s[1]);
+                            sw.Stop(); Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds:N0} ms");
                             Console.WriteLine($"{(rt ? $"Deleted Key {s[1]}" : $"Key {s[1]} does not exist.")}");
                         } else {
                             Console.WriteLine("Invalid argument. Type h for help. ");
@@ -84,14 +99,18 @@ namespace RedisSample {
                         continue;
                     case "sw":
                         if (s.Length == 3) {
+                            sw.Restart();
                             program.SetWriteKeyValue(s[1], s[2]);
+                            sw.Stop(); Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds:N0} ms");
                         } else {
                             Console.WriteLine("Invalid argument. Type h for help. ");
                         }
                         continue;
                     case "sg":
                         if (s.Length == 2) {
+                            sw.Restart();
                             List<string> rt = program.SetGetKeyValues(s[1]);
+                            sw.Stop(); Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds:N0} ms");
                             if (rt.Count > 0) {
                                 Console.WriteLine($"Return value: \r\n{rt.Aggregate((i, j) => i + "\r\n" + j)}");
                             } else {
@@ -103,7 +122,9 @@ namespace RedisSample {
                         continue;
                     case "sr":
                         if (s.Length == 2) {
+                            sw.Restart();
                             List<string> rt = program.SetReadKeyValues(s[1]);
+                            sw.Stop(); Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds:N0} ms");
                             if (rt.Count > 0) {
                                 Console.WriteLine($"Return value: \r\n{rt.Aggregate((i, j) => i + "\r\n" + j)}");
                             } else {
